@@ -1,0 +1,8 @@
+{
+  "appId": "com.nodin.english",
+  "appName": "English with Nodin",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  }
+}

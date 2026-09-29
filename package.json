@@ -1,0 +1,16 @@
+{
+  "name": "english-with-nodin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare:web": "mkdir -p www && gzip -dc index.html.gz > www/index.html",
+    "android:sync": "npm run prepare:web && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/android": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0"
+  }
+}
