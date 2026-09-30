@@ -1,6 +1,6 @@
 {
-  "appId": "com.nodin.english",
-  "appName": "English with Nodin",
+  "appId": "com.nodin.english.mobilefix",
+  "appName": "Nodin Mobile Fix",
   "webDir": "www",
   "android": {
     "allowMixedContent": true
