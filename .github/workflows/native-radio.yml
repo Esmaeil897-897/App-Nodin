@@ -2,7 +2,7 @@ name: Nodin Native Radio APK
 on:
   push:
     branches: [main]
-    paths: ['Nodin-Android-Native-Radio.zip', '.github/workflows/native-radio.yml']
+    paths: ['Nodin-Android-Native-Radio.zip', '.github/workflows/native-radio.yml', 'nodin-8.3.patch.gz.b64']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +19,8 @@ jobs:
         with:
           gradle-version: '8.11.1'
       - run: unzip -q Nodin-Android-Native-Radio.zip -d native-build
+      - name: Apply RSS and native location update
+        run: base64 -d nodin-8.3.patch.gz.b64 | gzip -d > update.patch && cd native-build && git apply ../update.patch
       - name: Set controls two sizes above selected text
         run: |
           cd native-build
@@ -70,6 +72,6 @@ jobs:
             adb pull /sdcard/nodin-test.png nodin-test.png
       - uses: actions/upload-artifact@v4
         with:
-          name: Nodin-Controls-Plus-2-APK
+          name: Nodin-RSS-Weather-8.3-APK
           path: native-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
