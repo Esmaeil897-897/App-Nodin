@@ -48,6 +48,7 @@ jobs:
           disable-animations: true
           script: |
             cd layers-build/Nodin-9.0 && gradle --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=com.nodin.english.LayersTest :app:connectedDebugAndroidTest
+            adb install -r layers-build/Nodin-9.0/app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.nodin.english.layers
             adb shell am start -n com.nodin.english.layers/com.nodin.english.LayersActivity
             sleep 3
