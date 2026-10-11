@@ -1,0 +1,85 @@
+name: Nodin Dialogues 9.2 Android
+on:
+  push:
+    branches: [nodin-9.2-dialogue-turns]
+    paths: ['Nodin-Dialogues-9.2-Source.zip', '.github/workflows/nodin-dialogues-9.2.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nodin-dialogues-92-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Unpack isolated source
+        run: unzip -q Nodin-Dialogues-9.2-Source.zip -d layers-build
+      - name: Use preinstalled Android SDK
+        run: |
+          sdk_root="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          "$sdk_root/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Test AI relay contract
+        run: python3 -m unittest discover -s layers-build/Nodin-9.2/ai-server -p 'test_*.py'
+      - name: Compile Android app and UI tests; lint
+        working-directory: layers-build/Nodin-9.2
+        run: gradle --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+      - name: Enable emulator KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Test native layer selection and conversation on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          emulator-build: 15917651
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb shell am force-stop com.android.launcher3
+            adb shell settings put secure tts_default_synth com.nodin.english.layers.v92.test
+            cd layers-build/Nodin-9.2 && gradle --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest :app:connectedDebugAndroidTest
+            adb shell am force-stop com.android.launcher3
+            adb install -r layers-build/Nodin-9.2/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop com.nodin.english.layers.v92
+            adb shell am start -n com.nodin.english.layers.v92/com.nodin.english.LayersActivity
+            sleep 3
+            adb shell screencap -p /sdcard/nodin-layers.png
+            adb pull /sdcard/nodin-layers.png layers-build/Nodin-9.2/nodin-layers.png
+            adb pull /sdcard/nodin-visual-9.1.png layers-build/Nodin-9.2/nodin-visual-9.1.png
+            adb pull /sdcard/nodin-avatar-9.1.png layers-build/Nodin-9.2/nodin-avatar-9.1.png
+            adb pull /sdcard/nodin-voice-9.1.png layers-build/Nodin-9.2/nodin-voice-9.1.png
+            adb pull /sdcard/nodin-dialogue-avatar-9.2.png layers-build/Nodin-9.2/nodin-dialogue-avatar-9.2.png
+            adb pull /sdcard/nodin-dialogue-voice-9.2.png layers-build/Nodin-9.2/nodin-dialogue-voice-9.2.png
+      - name: Verify signature and package
+        working-directory: layers-build/Nodin-9.2
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk Nodin-Dialogues-9.2.apk
+          sha256sum Nodin-Dialogues-9.2.apk > Nodin-Dialogues-9.2.apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nodin-Dialogues-9.2-Android
+          path: |
+            layers-build/Nodin-9.2/Nodin-Dialogues-9.2.apk
+            layers-build/Nodin-9.2/Nodin-Dialogues-9.2.apk.sha256
+            layers-build/Nodin-9.2/nodin-layers.png
+            layers-build/Nodin-9.2/nodin-*.png
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Nodin-Dialogues-9.2-Reports
+          path: layers-build/Nodin-9.2/app/build/reports/
