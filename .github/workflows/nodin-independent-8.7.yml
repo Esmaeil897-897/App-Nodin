@@ -26,7 +26,10 @@ jobs:
       - name: Unpack independent source
         run: unzip -q Nodin-Source-8.7-independent.zip -d independent-build
       - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          sdk_root="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          "$sdk_root/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
       - name: Compile and lint APK
         working-directory: independent-build/Nodin-8.7
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
