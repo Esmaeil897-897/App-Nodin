@@ -68,8 +68,12 @@ jobs:
           script: |
             adb install -r output/Nodin-9.4.apk
             adb install -r output/Nodin-9.4-test.apk
-            adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LayersTest,com.nodin.english.DialogueTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
+            adb shell am force-stop com.android.launcher3
+            adb shell settings put secure tts_default_synth com.nodin.english.stable.test
+            adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
             grep -q 'OK (' output/instrumentation.txt
+            adb install -r output/Nodin-9.4.apk
+            adb shell am force-stop com.nodin.english.stable
             adb shell am start -n com.nodin.english.stable/com.nodin.english.LayersActivity --ez learningHub true
             sleep 3
             adb shell screencap -p /sdcard/nodin-learning.png
