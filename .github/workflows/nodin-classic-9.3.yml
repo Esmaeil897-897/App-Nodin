@@ -12,6 +12,7 @@ concurrency:
 jobs:
   build-test:
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v5
@@ -50,18 +51,24 @@ jobs:
             cd layers-build/Nodin-9.3 && gradle --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest :app:connectedDebugAndroidTest
             adb install -r layers-build/Nodin-9.3/app/build/outputs/apk/debug/app-debug.apk
             adb install -r layers-build/Nodin-9.3/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#aFolderAutosaveRecoveryAndReset' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/classic-test.txt
+            timeout 180s adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#aFolderAutosaveRecoveryAndReset' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/classic-test.txt
+            adb logcat -d -v threadtime > layers-build/Nodin-9.3/emulator-logcat.txt
             test "$(grep -c 'OK (1 test)' layers-build/Nodin-9.3/classic-test.txt)" -eq 1
-            adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#bPrepareUpgradeData' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/seed-test.txt
+            timeout 180s adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#bPrepareUpgradeData' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/seed-test.txt
+            adb logcat -d -v threadtime > layers-build/Nodin-9.3/emulator-logcat.txt
             test "$(grep -c 'OK (1 test)' layers-build/Nodin-9.3/seed-test.txt)" -eq 1
             cd layers-build/Nodin-9.3 && gradle --no-daemon -PnodinVersionCode=34 :app:assembleDebug
             adb install -r layers-build/Nodin-9.3/app/build/outputs/apk/debug/app-debug.apk
-            adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#cVerifyUpgradeData' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/upgrade-test.txt
+            adb shell am force-stop com.nodin.english.stable.test
+            adb shell am force-stop com.nodin.english.stable
+            timeout 180s adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#cVerifyUpgradeData' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/upgrade-test.txt
+            adb logcat -d -v threadtime > layers-build/Nodin-9.3/emulator-logcat.txt
             test "$(grep -c 'OK (1 test)' layers-build/Nodin-9.3/upgrade-test.txt)" -eq 1
             adb shell am force-stop com.nodin.english.stable
             adb shell run-as com.nodin.english.stable rm files/classic-progress.json
             adb shell run-as com.nodin.english.stable rm -rf app_webview
-            adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#cVerifyUpgradeData' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/folder-recovery-test.txt
+            timeout 180s adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#cVerifyUpgradeData' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/folder-recovery-test.txt
+            adb logcat -d -v threadtime > layers-build/Nodin-9.3/emulator-logcat.txt
             test "$(grep -c 'OK (1 test)' layers-build/Nodin-9.3/folder-recovery-test.txt)" -eq 1
             keytool -genkeypair -alias androiddebugkey -keyalg RSA -keystore /tmp/nodin-test-different.jks -storepass android -keypass android -dname 'CN=Different test signer' -validity 365 -noprompt
             cd layers-build/Nodin-9.3 && gradle --no-daemon -PnodinVersionCode=35 -PnodinTestKeystore=/tmp/nodin-test-different.jks :app:assembleDebug :app:assembleDebugAndroidTest
@@ -69,7 +76,8 @@ jobs:
             adb uninstall com.nodin.english.stable
             adb install layers-build/Nodin-9.3/app/build/outputs/apk/debug/app-debug.apk
             adb install layers-build/Nodin-9.3/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#dDifferentSignatureFolderRecovery' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/different-signature-test.txt
+            timeout 180s adb shell am instrument -w -e class 'com.nodin.english.ClassicPersistenceTest#dDifferentSignatureFolderRecovery' com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee layers-build/Nodin-9.3/different-signature-test.txt
+            adb logcat -d -v threadtime > layers-build/Nodin-9.3/emulator-logcat.txt
             test "$(grep -c 'OK (1 test)' layers-build/Nodin-9.3/different-signature-test.txt)" -eq 1
             adb pull /sdcard/nodin-classic-autosave-9.3.png layers-build/Nodin-9.3/nodin-classic-autosave-9.3.png
       - name: Prepare unsigned release for private stable signing
@@ -88,6 +96,7 @@ jobs:
             layers-build/Nodin-9.3/signing-tools/apksigner.jar
             layers-build/Nodin-9.3/nodin-classic-autosave-9.3.png
             layers-build/Nodin-9.3/*-test.txt
+            layers-build/Nodin-9.3/emulator-logcat.txt
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
@@ -96,3 +105,4 @@ jobs:
           path: |
             layers-build/Nodin-9.3/app/build/reports/
             layers-build/Nodin-9.3/*-test.txt
+            layers-build/Nodin-9.3/emulator-logcat.txt
