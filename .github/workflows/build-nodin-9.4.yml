@@ -1,11 +1,11 @@
-name: Nodin 9.4 Learning Studio
+name: Nodin 9.5 Learning Studio
 on:
   push:
     branches: [nodin-9.4-learning-studio]
     paths: [nodin-9.4.patch.gz.b64, '.github/workflows/build-nodin-9.4.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,37 +22,40 @@ jobs:
       - name: Extract source
         run: |
           unzip -q Nodin-Source-9.3.zip -d source
-          mv source/Nodin-9.3 source/Nodin-9.4
+          mv source/Nodin-9.3 source/Nodin-9.5
           base64 -d nodin-9.4.patch.gz.b64 | gzip -d > /tmp/nodin.patch
-          cd source/Nodin-9.4
+          cd source/Nodin-9.5
           patch -p1 < /tmp/nodin.patch
       - name: Licensed offline photographs
         run: |
           python -m pip install Pillow
-          python source/Nodin-9.4/tools/fetch_photos.py
+          python source/Nodin-9.5/tools/fetch_photos.py
+      - name: Validate service contract
+        run: python -m unittest discover -s source/Nodin-9.5/server -v
       - name: Build and lint
-        working-directory: source/Nodin-9.4
+        working-directory: source/Nodin-9.5
         run: gradle assembleDebug assembleDebugAndroidTest lintDebug --no-daemon
       - name: Package outputs
         run: |
           mkdir -p output
-          cp source/Nodin-9.4/app/build/outputs/apk/debug/app-debug.apk output/Nodin-9.4.apk
+          cp source/Nodin-9.5/app/build/outputs/apk/debug/app-debug.apk output/Nodin-9.5.apk
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" output/apksigner.jar
-          cp source/Nodin-9.4/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk output/Nodin-9.4-test.apk
-          cp source/Nodin-9.4/app/src/main/assets/learning/photos-contact-sheet.jpg output/
-          cp source/Nodin-9.4/app/src/main/assets/learning/photos.json output/
+          cp source/Nodin-9.5/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk output/Nodin-9.5-test.apk
+          cp source/Nodin-9.5/app/src/main/assets/learning/photos-contact-sheet.jpg output/
+          cp source/Nodin-9.5/app/src/main/assets/learning/photos.json output/
+          cp source/Nodin-9.5/app/src/main/assets/learning/packs/*.json output/
           cd source
-          zip -qr ../output/Nodin-Source-9.4.zip Nodin-9.4 -x '*/build/*' '*/.gradle/*'
+          zip -qr ../output/Nodin-Source-9.5.zip Nodin-9.5 -x '*/build/*' '*/.gradle/*'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.4-build-diagnostics
+          name: Nodin-9.5-build-diagnostics
           path: |
-            source/Nodin-9.4/app/build/reports
-            source/Nodin-9.4/app/src/main/assets/learning/photos-contact-sheet.jpg
+            source/Nodin-9.5/app/build/reports
+            source/Nodin-9.5/app/src/main/assets/learning/photos-contact-sheet.jpg
       - uses: actions/upload-artifact@v4
         with:
-          name: Nodin-9.4-Android
+          name: Nodin-9.5-Android
           path: output/
       - name: Enable KVM
         run: |
@@ -66,20 +69,26 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            adb install -r output/Nodin-9.4.apk
-            adb install -r output/Nodin-9.4-test.apk
+            adb install -r output/Nodin-9.5.apk
+            adb install -r output/Nodin-9.5-test.apk
             adb shell am force-stop com.android.launcher3
             adb shell settings put secure tts_default_synth com.nodin.english.stable.test
             adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
             grep -q 'OK (' output/instrumentation.txt
-            adb install -r output/Nodin-9.4.apk
+            adb install -r output/Nodin-9.5.apk
             adb shell am force-stop com.nodin.english.stable
             adb shell am start -n com.nodin.english.stable/com.nodin.english.LayersActivity --ez learningHub true
             sleep 3
             adb shell screencap -p /sdcard/nodin-learning.png
             adb pull /sdcard/nodin-learning.png output/nodin-learning.png
+      - name: Publish data-only lesson packs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view nodin-learning-packs >/dev/null 2>&1 || gh release create nodin-learning-packs --title "Nodin learning packs" --notes "Optional authored educational JSON packs. No executable code." --prerelease
+          gh release upload nodin-learning-packs output/nodin-*.json --clobber
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.4-tests
+          name: Nodin-9.5-tests
           path: output/
