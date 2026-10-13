@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,10 +27,14 @@ jobs:
           base64 -d nodin-9.4.patch.gz.b64 | gzip -d > /tmp/nodin.patch
           cd source/Nodin-9.5
           patch -p1 < /tmp/nodin.patch
-      - name: Licensed offline photographs
-        run: |
-          python -m pip install Pillow
-          python source/Nodin-9.5/tools/fetch_photos.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: Nodin-9.4-Android
+          run-id: 38315983358
+          github-token: ${{ github.token }}
+          path: reviewed-photo-cache
+      - name: Reuse reviewed offline photographs
+        run: python source/Nodin-9.5/tools/reuse_photos.py
       - name: Validate service contract
         run: python -m unittest discover -s source/Nodin-9.5/server -v
       - name: Build and lint
