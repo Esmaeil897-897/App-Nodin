@@ -9,6 +9,7 @@ permissions:
   actions: read
 jobs:
   build:
+    if: ${{ !contains(github.event.head_commit.message, 'Diagnose Amir runtime') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -87,7 +88,9 @@ jobs:
             adb install -r output/Nodin-9.9-test.apk
             adb shell am force-stop com.android.launcher3
             adb shell settings put secure tts_default_synth com.nodin.english.stable.test
+            adb logcat -c
             adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest,com.nodin.english.TheoryAvatarTest,com.nodin.english.PersianTtsTest,com.nodin.english.AmirTtsTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
+            adb logcat -d > output/logcat.txt
             grep -q 'OK (' output/instrumentation.txt
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/amir-driving-sample.wav output/amir-driving-sample.wav
             adb install -r output/Nodin-9.9.apk
@@ -112,3 +115,50 @@ jobs:
         with:
           name: Nodin-9.9-tests
           path: output/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Nodin-9.9-runtime-log
+          path: |
+            output/logcat.txt
+            output/instrumentation.txt
+            output/amir-driving-sample.wav
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, 'Diagnose Amir runtime') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: Nodin-9.9-Android
+          run-id: 38551374728
+          github-token: ${{ github.token }}
+          path: output
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            adb install -r output/Nodin-9.9.apk
+            adb install -r output/Nodin-9.9-test.apk
+            adb logcat -c
+            adb shell am instrument -w -e class com.nodin.english.AmirTtsTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/amir-diagnose.txt
+            adb logcat -d > output/amir-logcat.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Amir-runtime-diagnosis
+          path: |
+            output/amir-logcat.txt
+            output/amir-diagnose.txt
