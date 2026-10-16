@@ -91,7 +91,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            adb install -r output/Nodin-9.14.apk
+            adb install -r -g output/Nodin-9.14.apk
             adb install -r output/Nodin-9.14-test.apk
             adb shell am force-stop com.android.launcher3
             adb shell settings put secure tts_default_synth com.nodin.english.stable.test
@@ -106,7 +106,7 @@ jobs:
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-telegram-lesson.png output/nodin-telegram-lesson.png
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-market-iran.png output/nodin-market-iran.png
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-market-global.png output/nodin-market-global.png
-            adb install -r output/Nodin-9.14.apk
+            adb install -r -g output/Nodin-9.14.apk
             adb shell am force-stop com.nodin.english.stable
             adb shell am start -n com.nodin.english.stable/com.nodin.english.LayersActivity --ez learningHub true
             sleep 3
