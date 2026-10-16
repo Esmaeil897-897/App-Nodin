@@ -1,4 +1,4 @@
-name: Nodin 9.10 Learning Studio
+name: Nodin 9.11 Learning Studio
 on:
   push:
     branches: [nodin-9.4-learning-studio]
@@ -9,7 +9,6 @@ permissions:
   actions: read
 jobs:
   build:
-    if: ${{ !contains(github.event.head_commit.message, 'Package tested Nodin') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -24,62 +23,62 @@ jobs:
       - name: Extract source
         run: |
           unzip -q Nodin-Source-9.3.zip -d source
-          mv source/Nodin-9.3 source/Nodin-9.10
+          mv source/Nodin-9.3 source/Nodin-9.11
           base64 -d nodin-9.4.patch.gz.b64 | gzip -d > /tmp/nodin.patch
-          cd source/Nodin-9.10
+          cd source/Nodin-9.11
           patch -p1 < /tmp/nodin.patch
       - uses: actions/download-artifact@v4
         with:
-          name: Nodin-9.9-Android
-          run-id: 38553683155
+          name: Nodin-9.10-source
+          run-id: 38751749650
           github-token: ${{ github.token }}
           path: reviewed-photo-cache
       - name: Reuse reviewed offline photographs
-        run: python source/Nodin-9.10/tools/reuse_photos.py
+        run: python source/Nodin-9.11/tools/reuse_photos.py
       - name: Build reviewed driving theory content
         run: |
-          python source/Nodin-9.10/tools/fix_classic_translations.py
-          python source/Nodin-9.10/tools/fetch_theory_images.py
-          python source/Nodin-9.10/tools/build_theory_assets.py
+          python source/Nodin-9.11/tools/fix_classic_translations.py
+          python source/Nodin-9.11/tools/fetch_theory_images.py
+          python source/Nodin-9.11/tools/build_theory_assets.py
       - name: Bundle verified offline Persian speech
-        run: python source/Nodin-9.10/tools/fetch_persian_tts.py
+        run: python source/Nodin-9.11/tools/fetch_persian_tts.py
       - name: Bundle offline neural Persian voice
-        run: python source/Nodin-9.10/tools/fetch_amir_tts.py
+        run: python source/Nodin-9.11/tools/fetch_amir_tts.py
       - name: Bundle offline British voices
-        run: python source/Nodin-9.10/tools/fetch_british_tts.py
+        run: python source/Nodin-9.11/tools/fetch_british_tts.py
       - name: Validate service contract
-        run: python -m unittest discover -s source/Nodin-9.10/server -v
+        run: python -m unittest discover -s source/Nodin-9.11/server -v
       - name: Build and lint
-        working-directory: source/Nodin-9.10
+        working-directory: source/Nodin-9.11
         run: gradle assembleDebug assembleDebugAndroidTest lintDebug --no-daemon
       - name: Package outputs
         run: |
           mkdir -p output
-          cp source/Nodin-9.10/app/build/outputs/apk/debug/app-debug.apk output/Nodin-9.10.apk
+          cp source/Nodin-9.11/app/build/outputs/apk/debug/app-debug.apk output/Nodin-9.11.apk
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" output/apksigner.jar
-          cp source/Nodin-9.10/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk output/Nodin-9.10-test.apk
-          cp source/Nodin-9.10/app/src/main/assets/learning/photos-contact-sheet.jpg output/
-          cp source/Nodin-9.10/app/src/main/assets/learning/photos.json output/
-          cp source/Nodin-9.10/app/src/main/assets/learning/packs/*.json output/
+          cp source/Nodin-9.11/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk output/Nodin-9.11-test.apk
+          cp source/Nodin-9.11/app/src/main/assets/learning/photos-contact-sheet.jpg output/
+          cp source/Nodin-9.11/app/src/main/assets/learning/photos.json output/
+          cp source/Nodin-9.11/app/src/main/assets/learning/packs/*.json output/
           cd source
-          zip -qr ../output/Nodin-Source-9.10.zip Nodin-9.10 -x '*/build/*' '*/.gradle/*' '*/.tts-build-cache/*'
+          zip -qr ../output/Nodin-Source-9.11.zip Nodin-9.11 -x '*/build/*' '*/.gradle/*' '*/.tts-build-cache/*'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.10-build-diagnostics
+          name: Nodin-9.11-build-diagnostics
           path: |
-            source/Nodin-9.10/app/build/reports
-            source/Nodin-9.10/app/src/main/assets/learning/photos-contact-sheet.jpg
+            source/Nodin-9.11/app/build/reports
+            source/Nodin-9.11/app/src/main/assets/learning/photos-contact-sheet.jpg
       - uses: actions/upload-artifact@v4
         with:
-          name: Nodin-9.10-Android
+          name: Nodin-9.11-Android
           path: |
-            output/Nodin-9.10.apk
+            output/Nodin-9.11.apk
             output/apksigner.jar
       - uses: actions/upload-artifact@v4
         with:
-          name: Nodin-9.10-source
-          path: output/Nodin-Source-9.10.zip
+          name: Nodin-9.11-source
+          path: output/Nodin-Source-9.11.zip
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -92,19 +91,20 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            adb install -r output/Nodin-9.10.apk
-            adb install -r output/Nodin-9.10-test.apk
+            adb install -r output/Nodin-9.11.apk
+            adb install -r output/Nodin-9.11-test.apk
             adb shell am force-stop com.android.launcher3
             adb shell settings put secure tts_default_synth com.nodin.english.stable.test
             adb logcat -c
-            adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest,com.nodin.english.TheoryAvatarTest,com.nodin.english.PersianTtsTest,com.nodin.english.AmirTtsTest,com.nodin.english.BritishTtsTest,com.nodin.english.BritishVoiceSettingsTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
+            adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest,com.nodin.english.TheoryAvatarTest,com.nodin.english.PersianTtsTest,com.nodin.english.AmirTtsTest,com.nodin.english.BritishTtsTest,com.nodin.english.BritishVoiceSettingsTest,com.nodin.english.TelegramTest,com.nodin.english.TelegramUiTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
             adb logcat -d > output/logcat.txt
             grep -q 'OK (' output/instrumentation.txt
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/amir-driving-sample.wav output/amir-driving-sample.wav
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/british-alan-sample.wav output/british-alan-sample.wav
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/british-northern-sample.wav output/british-northern-sample.wav
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/british-voice-settings.png output/british-voice-settings.png
-            adb install -r output/Nodin-9.10.apk
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-telegram-lesson.png output/nodin-telegram-lesson.png
+            adb install -r output/Nodin-9.11.apk
             adb shell am force-stop com.nodin.english.stable
             adb shell am start -n com.nodin.english.stable/com.nodin.english.LayersActivity --ez learningHub true
             sleep 3
@@ -124,7 +124,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.10-tests
+          name: Nodin-9.11-tests
           path: |
             output/instrumentation.txt
             output/logcat.txt
@@ -133,7 +133,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.10-runtime-log
+          name: Nodin-9.11-runtime-log
           path: |
             output/logcat.txt
             output/instrumentation.txt
@@ -141,24 +141,4 @@ jobs:
             output/british-alan-sample.wav
             output/british-northern-sample.wav
             output/british-voice-settings.png
-  deliver:
-    if: ${{ contains(github.event.head_commit.message, 'Package tested Nodin') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: Nodin-9.10-Android
-          run-id: 38750267110
-          github-token: ${{ github.token }}
-          path: output
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Nodin-9.10-installable
-          path: |
-            output/Nodin-9.10.apk
-            output/apksigner.jar
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Nodin-9.10-source
-          path: output/Nodin-Source-9.10.zip
+            output/nodin-telegram-lesson.png
