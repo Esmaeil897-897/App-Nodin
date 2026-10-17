@@ -48,9 +48,11 @@ jobs:
         run: python source/Nodin-9.17/tools/fetch_british_tts.py
       - name: Validate service contract
         run: python -m unittest discover -s source/Nodin-9.17/server -v
+      - name: Prepare disposable upgrade test signing key
+        run: keytool -genkeypair -keystore "$RUNNER_TEMP/nodin-ci.jks" -storetype JKS -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 365 -dname "CN=Nodin CI Test"
       - name: Build and lint
         working-directory: source/Nodin-9.17
-        run: gradle assembleDebug assembleDebugAndroidTest lintDebug --no-daemon
+        run: gradle assembleDebug assembleDebugAndroidTest lintDebug --no-daemon -PnodinTestKeystore="$RUNNER_TEMP/nodin-ci.jks"
       - name: Package outputs
         run: |
           mkdir -p output
@@ -97,7 +99,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            java -jar output/apksigner.jar sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --out output/Nodin-upgrade-base.apk upgrade-cache/Nodin-9.15.apk
+            java -jar output/apksigner.jar sign --ks "$RUNNER_TEMP/nodin-ci.jks" --ks-key-alias androiddebugkey --ks-pass pass:android --out output/Nodin-upgrade-base.apk upgrade-cache/Nodin-9.15.apk
             adb install -r -g output/Nodin-upgrade-base.apk
             adb shell run-as com.nodin.english.stable mkdir -p files
             adb shell run-as com.nodin.english.stable touch files/nodin-upgrade-sentinel
