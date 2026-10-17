@@ -1,4 +1,4 @@
-name: Nodin 9.16 Learning Studio
+name: Nodin 9.17 Learning Studio
 on:
   push:
     branches: [nodin-9.4-learning-studio]
@@ -23,9 +23,9 @@ jobs:
       - name: Extract source
         run: |
           unzip -q Nodin-Source-9.3.zip -d source
-          mv source/Nodin-9.3 source/Nodin-9.16
+          mv source/Nodin-9.3 source/Nodin-9.17
           base64 -d nodin-9.4.patch.gz.b64 | gzip -d > /tmp/nodin.patch
-          cd source/Nodin-9.16
+          cd source/Nodin-9.17
           patch -p1 < /tmp/nodin.patch
       - uses: actions/download-artifact@v4
         with:
@@ -34,51 +34,57 @@ jobs:
           github-token: ${{ github.token }}
           path: reviewed-photo-cache
       - name: Reuse reviewed offline photographs
-        run: python source/Nodin-9.16/tools/reuse_photos.py
+        run: python source/Nodin-9.17/tools/reuse_photos.py
       - name: Build reviewed driving theory content
         run: |
-          python source/Nodin-9.16/tools/fix_classic_translations.py
-          python source/Nodin-9.16/tools/fetch_theory_images.py
-          python source/Nodin-9.16/tools/build_theory_assets.py
+          python source/Nodin-9.17/tools/fix_classic_translations.py
+          python source/Nodin-9.17/tools/fetch_theory_images.py
+          python source/Nodin-9.17/tools/build_theory_assets.py
       - name: Bundle verified offline Persian speech
-        run: python source/Nodin-9.16/tools/fetch_persian_tts.py
+        run: python source/Nodin-9.17/tools/fetch_persian_tts.py
       - name: Bundle offline neural Persian voice
-        run: python source/Nodin-9.16/tools/fetch_amir_tts.py
+        run: python source/Nodin-9.17/tools/fetch_amir_tts.py
       - name: Bundle offline British voices
-        run: python source/Nodin-9.16/tools/fetch_british_tts.py
+        run: python source/Nodin-9.17/tools/fetch_british_tts.py
       - name: Validate service contract
-        run: python -m unittest discover -s source/Nodin-9.16/server -v
+        run: python -m unittest discover -s source/Nodin-9.17/server -v
       - name: Build and lint
-        working-directory: source/Nodin-9.16
+        working-directory: source/Nodin-9.17
         run: gradle assembleDebug assembleDebugAndroidTest lintDebug --no-daemon
       - name: Package outputs
         run: |
           mkdir -p output
-          cp source/Nodin-9.16/app/build/outputs/apk/debug/app-debug.apk output/Nodin-9.16.apk
+          cp source/Nodin-9.17/app/build/outputs/apk/debug/app-debug.apk output/Nodin-9.17.apk
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" output/apksigner.jar
-          cp source/Nodin-9.16/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk output/Nodin-9.16-test.apk
-          cp source/Nodin-9.16/app/src/main/assets/learning/photos-contact-sheet.jpg output/
-          cp source/Nodin-9.16/app/src/main/assets/learning/photos.json output/
-          cp source/Nodin-9.16/app/src/main/assets/learning/packs/*.json output/
+          cp source/Nodin-9.17/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk output/Nodin-9.17-test.apk
+          cp source/Nodin-9.17/app/src/main/assets/learning/photos-contact-sheet.jpg output/
+          cp source/Nodin-9.17/app/src/main/assets/learning/photos.json output/
+          cp source/Nodin-9.17/app/src/main/assets/learning/packs/*.json output/
           cd source
-          zip -qr ../output/Nodin-Source-9.16.zip Nodin-9.16 -x '*/build/*' '*/.gradle/*' '*/.tts-build-cache/*'
+          zip -qr ../output/Nodin-Source-9.17.zip Nodin-9.17 -x '*/build/*' '*/.gradle/*' '*/.tts-build-cache/*'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.16-build-diagnostics
+          name: Nodin-9.17-build-diagnostics
           path: |
-            source/Nodin-9.16/app/build/reports
-            source/Nodin-9.16/app/src/main/assets/learning/photos-contact-sheet.jpg
+            source/Nodin-9.17/app/build/reports
+            source/Nodin-9.17/app/src/main/assets/learning/photos-contact-sheet.jpg
       - uses: actions/upload-artifact@v4
         with:
-          name: Nodin-9.16-Android
+          name: Nodin-9.17-Android
           path: |
-            output/Nodin-9.16.apk
+            output/Nodin-9.17.apk
             output/apksigner.jar
       - uses: actions/upload-artifact@v4
         with:
-          name: Nodin-9.16-source
-          path: output/Nodin-Source-9.16.zip
+          name: Nodin-9.17-source
+          path: output/Nodin-Source-9.17.zip
+      - uses: actions/download-artifact@v4
+        with:
+          name: Nodin-9.15-Android
+          run-id: 39011749182
+          github-token: ${{ github.token }}
+          path: upgrade-cache
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -91,12 +97,18 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            adb install -r -g output/Nodin-9.16.apk
-            adb install -r output/Nodin-9.16-test.apk
+            java -jar output/apksigner.jar sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --out output/Nodin-upgrade-base.apk upgrade-cache/Nodin-9.15.apk
+            adb install -r -g output/Nodin-upgrade-base.apk
+            adb shell run-as com.nodin.english.stable mkdir -p files
+            adb shell run-as com.nodin.english.stable touch files/nodin-upgrade-sentinel
+            adb install -r -g output/Nodin-9.17.apk
+            adb shell run-as com.nodin.english.stable ls files/nodin-upgrade-sentinel > output/upgrade-check.txt
+            grep -q nodin-upgrade-sentinel output/upgrade-check.txt
+            adb install -r output/Nodin-9.17-test.apk
             adb shell am force-stop com.android.launcher3
             adb shell settings put secure tts_default_synth com.nodin.english.stable.test
             adb logcat -c
-            adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest,com.nodin.english.TheoryAvatarTest,com.nodin.english.PersianTtsTest,com.nodin.english.AmirTtsTest,com.nodin.english.BritishTtsTest,com.nodin.english.BritishVoiceSettingsTest,com.nodin.english.TelegramReliabilityTest,com.nodin.english.TelegramGroupsTest,com.nodin.english.TelegramTest,com.nodin.english.TelegramUiTest,com.nodin.english.MarketTest,com.nodin.english.MarketUiTest,com.nodin.english.TelegramPresentationTest,com.nodin.english.MarketPosterTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
+            adb shell am instrument -w -e class com.nodin.english.LearningHubTest,com.nodin.english.LearningHubUiTest,com.nodin.english.LayersTest,com.nodin.english.SpeechCompatibilityTest,com.nodin.english.DialogueTest,com.nodin.english.TheoryAvatarTest,com.nodin.english.PersianTtsTest,com.nodin.english.AmirTtsTest,com.nodin.english.BritishTtsTest,com.nodin.english.BritishVoiceSettingsTest,com.nodin.english.TelegramReliabilityTest,com.nodin.english.TelegramGroupsTest,com.nodin.english.TelegramTest,com.nodin.english.TelegramUiTest,com.nodin.english.MarketTest,com.nodin.english.MarketUiTest,com.nodin.english.TelegramPresentationTest,com.nodin.english.MarketPosterTest,com.nodin.english.BankStudioTest com.nodin.english.stable.test/androidx.test.runner.AndroidJUnitRunner | tee output/instrumentation.txt
             adb logcat -d > output/logcat.txt
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/amir-driving-sample.wav output/amir-driving-sample.wav
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/british-alan-sample.wav output/british-alan-sample.wav
@@ -117,8 +129,14 @@ jobs:
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-asset-BTC_USD.jpg output/nodin-asset-BTC_USD.jpg
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-asset-XAU_USD.jpg output/nodin-asset-XAU_USD.jpg
             adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-asset-BRENT_USD.jpg output/nodin-asset-BRENT_USD.jpg
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-flashcard.jpg output/nodin-flashcard.jpg
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-pound-animation.gif output/nodin-pound-animation.gif
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-bank-studio.png output/nodin-bank-studio.png
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-bank-sample.xlsx output/nodin-bank-sample.xlsx
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-bank-sample.docx output/nodin-bank-sample.docx
+            adb pull /sdcard/Android/data/com.nodin.english.stable/files/nodin-bank-sample.pdf output/nodin-bank-sample.pdf
             grep -q 'OK (' output/instrumentation.txt
-            adb install -r -g output/Nodin-9.16.apk
+            adb install -r -g output/Nodin-9.17.apk
             adb shell am force-stop com.nodin.english.stable
             adb shell am start -n com.nodin.english.stable/com.nodin.english.LayersActivity --ez learningHub true
             sleep 3
@@ -138,17 +156,22 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.16-tests
+          name: Nodin-9.17-tests
           path: |
             output/instrumentation.txt
             output/logcat.txt
             output/*.png
             output/*.jpg
             output/*.wav
+            output/*.gif
+            output/*.xlsx
+            output/*.docx
+            output/*.pdf
+            output/upgrade-check.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Nodin-9.16-runtime-log
+          name: Nodin-9.17-runtime-log
           path: |
             output/logcat.txt
             output/instrumentation.txt
