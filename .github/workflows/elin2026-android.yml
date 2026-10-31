@@ -41,8 +41,13 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
+          target: google_apis
           arch: x86_64
           profile: pixel_2
+          force-avd-creation: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -wipe-data
+          disable-animations: true
           script: cd elin2026 && gradle connectedDebugAndroidTest
       - name: Prepare private release key
         if: env.ELIN_SIGNING_ENABLED == 'true'
