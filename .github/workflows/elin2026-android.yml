@@ -35,6 +35,13 @@ jobs:
         run: gradle assembleDebug
       - name: Run unit tests
         run: gradle testDebugUnitTest
+      - name: Run Android emulator tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: Pixel_2
+          script: cd elin2026 && gradle connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
           name: Elin2026-debug-apk
