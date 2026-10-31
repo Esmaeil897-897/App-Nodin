@@ -1,45 +1,40 @@
-# Elin2026 — NODIN clean rebuild
+# Elin2026 — independent Android rebuild
 
-This branch is an isolated experimental rebuild. The previous NODIN project remains on its existing branches and is not modified.
+This is the separate experimental project area. **NODIN LEGACY** and its existing branches remain untouched.
 
-## Baseline
+## Source baseline
 
-- Reference package: `Nodin-Android-Chromebook-9.24-Source.zip`
-- Reference version: 9.24 (versionCode 54)
-- Original application ID: `com.nodin.english.stable`
-- Elin2026 application ID: `com.elin2026.nodin` (intentionally different, for side-by-side installation)
-- Source type: Android asset/native overlay. The 9.24 archive is not a complete native Android project and expects an exact 9.23 base APK plus the original private signing key. Elin2026 does not reuse that overlay or signing identity.
+- Native Android baseline: complete NODIN 9.17 source from GitHub Actions.
+- Web/assets overlay: NODIN Android/Chromebook 9.24 source archive.
+- New release application ID: `com.elin2026.nodin`.
+- New debug application ID: `com.elin2026.nodin.debug`.
+- Internal Android namespace remains `com.nodin.english` for compatibility with the 9.17 Java/Kotlin source.
+- Current integration version: `0.2.0-alpha01`, versionCode 2.
 
-## Rebuild principles
+## Get the source
 
-1. Reimplement the Android host app cleanly in Kotlin.
-2. Import and validate the 9.24 web assets and educational datasets using `scripts/import_924_assets.py`.
-3. Rebuild native capabilities through documented, testable interfaces; do not copy opaque DEX or SMALI patches.
-4. Keep family profiles and financial records local by default. Never upload them or include them in diagnostics.
-5. Keep service credentials out of source control. External services stay disabled until configured.
-6. Use a new application ID and a new signing certificate. The private keystore must remain outside this repository.
+The full source integration is provided as a separate patch archive in this conversation. It contains the 9.24 asset overlay, ported native additions, Elin2026 build configuration, security classes, tests and an apply script.
 
-## Build
+To retrieve the 9.17 source baseline, download the `Nodin-9.17-source` artifact from [GitHub Actions run 39063593092](https://github.com/Esmaeil897-897/App-Nodin/actions/runs/39063593092). Then follow `README-fa.md` inside the patch archive and run `apply_to_nodin917.py`.
 
-The project uses Gradle 8.9+ and Android Gradle Plugin 8.7.3.
+## Build requirements
 
-```bash
-gradle assembleDebug
-gradle testDebugUnitTest
-```
+- Android SDK Platform 35
+- Java 17
+- Python 3 and internet access for the pinned Vosk model downloads
 
-For the 9.24 UI/data baseline, extract the supplied source archive and import its `android-update/assets` directory:
+Build the debug APK with:
 
 ```bash
-python scripts/import_924_assets.py /path/to/Nodin-Android-Chromebook-9.24-Source.zip
+./gradlew :app:assembleDebug
 ```
 
-Until those assets are imported, the app uses a small local placeholder page.
+The full source project downloads the Vosk English and Persian model archives and checks their SHA-256 before packaging. Set the four `ELIN_*` signing environment variables to sign debug/release builds with the new Elin2026 keystore.
 
-## Signing
+## Preview APK
 
-Debug builds use the standard Android debug key. Release signing is intentionally not configured with a committed key. Configure the GitHub Actions secrets `ELIN_KEYSTORE_BASE64`, `ELIN_KEYSTORE_PASSWORD`, `ELIN_KEY_ALIAS`, and `ELIN_KEY_PASSWORD` only after creating and securely backing up the new Elin2026 keystore. Never upload the keystore or passwords into this repository.
+A separate preview APK is supplied in this conversation. It is based on the 9.17 Android build artifact with 9.24 web assets and is signed with the new Elin2026 certificate. It is not a full Gradle build; its native translator is not active yet. Build the merged source project to include that port.
 
-## Scope
+## Important compatibility note
 
-This is the starting scaffold, not a claim that all 9.24 features have already been ported. Each feature will be migrated with tests and a documented acceptance check before it is marked complete.
+The 9.24 archive is an overlay intended for an exact 9.23 APK and the original private key. Those base-specific DEX/SMALI patches are not reused. Elin2026 is a separate package and signing identity; it does not overwrite or impersonate NODIN LEGACY.
