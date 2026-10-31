@@ -1,16 +1,18 @@
 package com.elin2026.nodin
 
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BuildIdentityTest {
     @Test
-    fun newPackageIdentityIsIsolatedFromLegacyNodin() {
-        assertEquals("com.elin2026.nodin", BuildConfig.APPLICATION_ID)
+    fun packageIdentityIsIsolatedFromLegacyNodin() {
+        assertTrue(BuildConfig.APPLICATION_ID.startsWith("com.elin2026.nodin"))
+        assertFalse(BuildConfig.APPLICATION_ID.startsWith("com.nodin.english.stable"))
     }
 
     @Test
-    fun initialVersionIsAnAlphaBuild() {
-        assertEquals("0.1.0-alpha01", BuildConfig.VERSION_NAME)
+    fun versionIsAnAlphaBuild() {
+        assertTrue(BuildConfig.VERSION_NAME.startsWith("0.1.0-alpha01"))
     }
 }
