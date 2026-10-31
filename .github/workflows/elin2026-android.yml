@@ -42,7 +42,7 @@ jobs:
         with:
           api-level: 35
           arch: x86_64
-          profile: Pixel_2
+          profile: pixel_2
           script: cd elin2026 && gradle connectedDebugAndroidTest
       - name: Prepare private release key
         if: env.ELIN_SIGNING_ENABLED == 'true'
