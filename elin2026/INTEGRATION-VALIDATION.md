@@ -18,7 +18,7 @@ A full Android Gradle build was not run. This environment has no Android SDK Pla
 
 ## GitHub CI scope
 
-The current GitHub Actions run [41184714128](https://github.com/Esmaeil897-897/App-Nodin/actions/runs/41184714128) builds the lightweight scaffold committed in the `Elin2026` branch. It is not yet building the 9.17 + 9.24 merged source tree. Its debug APK build and unit-test steps completed successfully; the emulator step was still running at the last check.
+The GitHub Actions run [41184714128](https://github.com/Esmaeil897-897/App-Nodin/actions/runs/41184714128) built the lightweight scaffold committed in the `Elin2026` branch, not the 9.17 + 9.24 merged source tree. Debug APK build and unit tests succeeded. Instrumentation did not complete: the emulator reported `adb: device offline`, then the instrumentation process crashed before any tests completed. The workflow was updated in commit `587ee72c22df448c109a5961368b6e5857a747a5` with explicit Google APIs target, fresh AVD creation, longer boot timeout, software GPU, disabled snapshots/animations, and clean data. Validation of that change is running at [41188269286](https://github.com/Esmaeil897-897/App-Nodin/actions/runs/41188269286).
 
 ## Next integration gate
 
