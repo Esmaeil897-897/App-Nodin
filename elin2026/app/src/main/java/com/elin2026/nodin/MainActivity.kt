@@ -7,6 +7,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebResourceResponse
+import java.io.ByteArrayInputStream
 import androidx.activity.ComponentActivity
 import androidx.webkit.WebViewAssetLoader
 
@@ -35,7 +37,7 @@ class MainActivity : ComponentActivity() {
                 override fun shouldInterceptRequest(
                     view: WebView,
                     request: WebResourceRequest
-                ) = assetLoader.shouldInterceptRequest(request.url)
+                ) = if (request.url.host == "appassets.androidplatform.net") assetLoader.shouldInterceptRequest(request.url) else WebResourceResponse("text/plain", "utf-8", 403, "Blocked", emptyMap(), ByteArrayInputStream(ByteArray(0)))
 
                 override fun shouldOverrideUrlLoading(
                     view: WebView,
