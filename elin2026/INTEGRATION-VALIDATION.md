@@ -23,3 +23,20 @@ The GitHub Actions run [41184714128](https://github.com/Esmaeil897-897/App-Nodin
 ## Next integration gate
 
 The merged source project and its binary asset overlay must be made available to the GitHub Actions runner before CI can compile that project. The patch archive remains a separately delivered artifact; it has not been represented as committed source in this branch. Keep NODIN LEGACY branches and the original signing identity untouched.
+
+
+## Direct full-source build attempt (2026-10-31)
+
+The original 9.17 Actions source artifact was downloaded again and the integration patch was applied to a fresh output directory. The resulting project contained 2,219 files.
+
+Additional checks passed:
+- The patch application script completed successfully.
+- The app Gradle configuration was corrected: the inherited 9.17 `app/build.gradle` Groovy file is removed during patch application so Gradle cannot silently prefer it over Elin2026's `app/build.gradle.kts`.
+- Elin2026 application ID and version settings are present in the selected Kotlin DSL build file.
+- Python syntax checks passed.
+- `node tests/classic-autosave.test.js` passed.
+- Asset data checks found 1,308 theory questions and 143 school lessons.
+
+A real `:app:assembleDebug` was attempted with `-PskipTranslatorModels`, but Gradle could not start because the environment has no cached Gradle 8.11.1 distribution and outbound DNS/network access is unavailable (`curl: (6) Could not resolve host: services.gradle.org`). No Android SDK Platform 35 or Android Build Tools are installed in this environment either. Therefore **no new APK was produced from this full source project**. The previously delivered preview APK remains a repackaged 9.17 APK and must not be described as a fresh source build.
+
+A corrected patch archive is supplied separately as `Elin2026-Source-Integration-Patch-Fixed.zip`, SHA-256 `592a29a1940b2d96c68c9e543b414aebb257238f74a30ffd870b8906ddcb61b4`.
