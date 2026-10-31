@@ -7,7 +7,7 @@ Reference: NODIN Android/Chromebook 9.24 overlay archive (25 October 2026).
 | Android host / WebView | Existing host retained via APK overlay | Kotlin host rebuilt; local-origin-only WebView; CI build configured |
 | School lessons | 143 | Not yet imported/validated |
 | School questions | 596 | Not yet imported/validated |
-| Driving theory questions | 1,308 | Quiz engine implemented; bank not yet imported/validated |
+| Driving theory questions | 1,308 | Engine implemented; source bank audited (unique IDs and valid answer indices); import pending |
 | Banking / HMRC tools | Present in source assets | Not yet imported/validated |
 | Translator | Floating/continuous translator sources included | Not yet ported |
 | Telegram learning reports | Source contains native patches and JS | Not yet ported |
@@ -17,7 +17,11 @@ Reference: NODIN Android/Chromebook 9.24 overlay archive (25 October 2026).
 
 No item should be marked complete until its implementation and regression tests are present in this branch.
 
-## Current implementation\n\n- Persian home dashboard with six module entry points, local search, and module status screens.\n- UI-independent driving theory quiz engine with input validation, one-answer-per-question flow, scoring, and unit tests.\n\n## First clean-room implementation
+## Current implementation\n\n- Persian home dashboard with six module entry points, local search, and module status screens.\n- UI-independent driving theory quiz engine with input validation, one-answer-per-question flow, scoring, and unit tests.\n\n
+- `TheoryQuizSession.kt`: reusable quiz engine validates question records, selects a bounded randomized set, accepts one answer per question, and calculates score/results. A local Kotlin compiler smoke test passed; the repository's Gradle/JUnit and emulator CI have not yet been confirmed green.
+- The 9.24 driving theory JSON was audited locally: 1,308 records, 1,308 unique IDs, and no invalid correct-answer indices. The bank itself has not yet been committed or wired into the app.
+
+## First clean-room implementation
 
 - `MainActivity.kt`: new Kotlin Activity and WebViewAssetLoader host. File/content access and cleartext traffic are disabled; only appassets origin is accepted.
 - `SecureTokenVault.kt`: AES-GCM secrets encrypted with a non-exportable Android Keystore key; ciphertext only is persisted.
