@@ -1,16 +1,38 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101b35">
-<title>Elin2026</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827"><title>Elin2026</title>
 <style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101b35;color:#f4f6fb}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box}
-main{max-width:640px;text-align:center;background:#182746;border:1px solid #31476d;border-radius:20px;padding:28px}
-h1{margin-top:0}p{line-height:1.9;color:#d4deef}
-small{color:#a9bddb}
-</style>
-</head>
-<body><main><h1>Elin2026</h1><p>پروژهٔ آزمایشی جدید نودین در حال بازسازی است.</p><p>پس از وارد کردن منابع نسخهٔ ۹.۲۴، بخش‌های آموزشی و ابزارها به‌صورت مرحله‌ای منتقل می‌شوند.</p><small>نسخهٔ آزمایشی 0.1.0-alpha01</small></main></body>
-</html>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131e30;--panel2:#1a2940;--line:#263852;--ink:#f2f6fc;--muted:#9aabc1;--accent:#70d6c4;--blue:#83aaff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#203b56 0,transparent 45%),var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+header{padding:24px 20px 16px;max-width:900px;margin:auto}.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(145deg,#70d6c4,#648ef5);display:grid;place-items:center;color:#071522;font-size:23px;font-weight:900;box-shadow:0 8px 28px #70d6c433}
+h1{font-size:22px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:4px}.hero{margin-top:22px;padding:22px;border:1px solid #35516b;border-radius:22px;background:linear-gradient(125deg,#1c344a,#18263c 65%,#20334c)}
+.hero small{color:var(--accent);font-weight:700}.hero h2{font-size:22px;line-height:1.5;margin:8px 0}.hero p{color:#c1cede;line-height:1.8;margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:0 20px 40px}.section-head{display:flex;align-items:center;justify-content:space-between;margin:22px 0 12px}.section-head h3{font-size:16px;margin:0}.count{font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;min-height:140px;text-align:right;color:var(--ink);cursor:pointer;transition:.15s}.tile:active{transform:scale(.98)}.tile:hover{border-color:#52718e;background:var(--panel2)}.ico{width:40px;height:40px;border-radius:13px;background:#22364d;display:grid;place-items:center;font-size:21px;margin-bottom:12px}.tile strong{display:block;font-size:14px}.tile span{display:block;color:var(--muted);font-size:11px;line-height:1.6;margin-top:5px}
+.status{display:inline-flex;align-items:center;gap:6px;color:#a8b8ca;font-size:10px;margin-top:10px}.dot{width:6px;height:6px;border-radius:50%;background:#e4b66c}
+.toolbar{display:flex;gap:8px;margin-top:18px}.toolbar input{min-width:0;flex:1;background:#101a2a;border:1px solid var(--line);border-radius:13px;padding:12px 14px;color:var(--ink);font:inherit;outline:none}.toolbar input:focus{border-color:var(--accent)}
+button{font:inherit}.smallbtn{border:1px solid var(--line);background:#18263a;color:var(--ink);border-radius:12px;padding:10px 13px;cursor:pointer}
+footer{max-width:900px;margin:0 auto;padding:0 20px 26px;color:#70829a;font-size:10px;text-align:center}
+#module{display:none}.back{background:transparent;color:var(--accent);border:0;padding:10px 0;cursor:pointer}.module-panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:12px}.module-panel h2{margin:4px 0 12px}.module-panel p{color:#bdcada;line-height:1.9;font-size:13px}.steps{padding-right:18px;color:#bdcada;font-size:13px;line-height:2}
+@media(min-width:650px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{padding:28px}.hero h2{font-size:26px}}
+</style></head>
+<body>
+<header><div class="brand"><div class="logo">E</div><div><h1>Elin2026</h1><div class="sub">محیط مستقل بازسازی و توسعه نودین</div></div></div>
+<section class="hero"><small>نسخه آزمایشی 0.1.0</small><h2>همه ابزارهای یادگیری و کار، در یک محیط</h2><p>این نسخه، پایه مستقل Elin2026 است. بخش‌ها به‌تدریج از مرجع NODIN 9.24 منتقل و پس از آزمایش فعال می‌شوند.</p></section>
+<div class="toolbar"><input id="search" type="search" placeholder="جست‌وجوی بخش‌ها..." aria-label="جست‌وجوی بخش‌ها"><button class="smallbtn" id="lang">EN</button></div></header>
+<main><section id="home"><div class="section-head"><h3>بخش‌های برنامه</h3><span class="count" id="shown">۶ بخش</span></div>
+<div class="grid" id="tiles">
+<button class="tile" data-id="school" data-title="آموزش زبان و مدرسه"><div class="ico">📚</div><strong>آموزش زبان و مدرسه</strong><span>درس‌ها، تمرین‌ها و آزمون‌های آموزشی</span><i class="status"><b class="dot"></b> در حال انتقال</i></button>
+<button class="tile" data-id="theory" data-title="آیین‌نامه رانندگی"><div class="ico">🚘</div><strong>آیین‌نامه رانندگی</strong><span>سؤالات تئوری، علائم و آزمون تمرینی</span><i class="status"><b class="dot"></b> در حال انتقال</i></button>
+<button class="tile" data-id="banking" data-title="ابزارهای مالی و HMRC"><div class="ico">💷</div><strong>ابزارهای مالی و HMRC</strong><span>مدیریت اسناد، گزارش‌ها و ابزارهای مالی</span><i class="status"><b class="dot"></b> در حال انتقال</i></button>
+<button class="tile" data-id="translator" data-title="مترجم"><div class="ico">🌐</div><strong>مترجم</strong><span>ترجمه و ابزارهای زبانی</span><i class="status"><b class="dot"></b> در حال انتقال</i></button>
+<button class="tile" data-id="telegram" data-title="گزارش و ارتباطات"><div class="ico">✉️</div><strong>گزارش و ارتباطات</strong><span>گزارش‌های یادگیری و قابلیت‌های ارتباطی</span><i class="status"><b class="dot"></b> در حال انتقال</i></button>
+<button class="tile" data-id="profiles" data-title="پروفایل‌ها و اطلاعات"><div class="ico">👤</div><strong>پروفایل‌ها و اطلاعات</strong><span>پروفایل‌های محلی و مدیریت داده‌ها</span><i class="status"><b class="dot"></b> پایه اولیه آماده</i></button>
+</div></section>
+<section id="module"><button class="back" id="back">← بازگشت به صفحه اصلی</button><div class="module-panel"><div class="ico" id="moduleIcon">🧩</div><h2 id="moduleTitle">بخش</h2><p id="moduleDesc"></p><p><strong>وضعیت:</strong> این بخش هنوز در مرحله انتقال و آزمایش است و در این نسخه قابلیت کامل آن فعال نشده است.</p><ol class="steps"><li>انتقال امن فایل‌ها و داده‌های مرجع 9.24</li><li>بازسازی عملکرد در پروژه مستقل</li><li>اجرای آزمون‌های خودکار و بررسی روی دستگاه</li></ol><button class="smallbtn" id="homeBtn">بازگشت</button></div></section>
+</main><footer>Elin2026 · پروژه مستقل · داده‌ها و امضای نسخه قدیمی بدون تغییر باقی می‌مانند</footer>
+<script>
+(()=>{const home=document.getElementById('home'),module=document.getElementById('module'),search=document.getElementById('search');const info={school:['📚','آموزش زبان و مدرسه','محیط آموزشی شامل درس‌ها، بانک سؤال و تمرین‌های مرحله‌ای است.'],theory:['🚘','آیین‌نامه رانندگی','بخش تمرین آزمون تئوری رانندگی و مرور علائم و قوانین.'],banking:['💷','ابزارهای مالی و HMRC','ابزارهای محلی برای کار با اسناد، گزارش‌ها و محاسبات مالی.'],translator:['🌐','مترجم','ابزار ترجمه و قابلیت‌های زبانی.'],telegram:['✉️','گزارش و ارتباطات','مدیریت گزارش‌های یادگیری و اتصال‌های ارتباطی پس از بازبینی امنیتی.'],profiles:['👤','پروفایل‌ها و اطلاعات','زیرساخت اولیه پروفایل‌های محلی در لایه اندروید پیاده‌سازی شده است.']};function open(id){const v=info[id];if(!v)return;document.getElementById('moduleIcon').textContent=v[0];document.getElementById('moduleTitle').textContent=v[1];document.getElementById('moduleDesc').textContent=v[2];home.style.display='none';module.style.display='block';search.value='';}function back(){module.style.display='none';home.style.display='block';}document.querySelectorAll('.tile').forEach(b=>b.addEventListener('click',()=>open(b.dataset.id)));document.getElementById('back').addEventListener('click',back);document.getElementById('homeBtn').addEventListener('click',back);search.addEventListener('input',()=>{let n=0;const q=search.value.trim().toLocaleLowerCase();document.querySelectorAll('.tile').forEach(b=>{const show=(b.dataset.title+' '+b.innerText).toLocaleLowerCase().includes(q);b.style.display=show?'block':'none';if(show)n++;});document.getElementById('shown').textContent=n+' بخش';});document.getElementById('lang').addEventListener('click',()=>{document.documentElement.lang='fa';document.getElementById('lang').textContent='FA';alert('رابط فارسی فعال است. نسخه انگلیسی در مرحله بعد اضافه می‌شود.');});})();
+</script></body></html>
