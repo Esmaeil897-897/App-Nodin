@@ -1,33 +1,39 @@
-# Elin2026 migration checklist
+# Elin2026 migration status
 
-Reference: NODIN Android/Chromebook 9.24 overlay archive (25 October 2026).
+The full source integration package was prepared separately from this lightweight Git branch. It uses the complete NODIN 9.17 Android source as the native baseline and overlays transferable NODIN 9.24 assets and source additions.
 
-| Area | 9.24 reference | Elin2026 status |
+| Area | 9.24 reference | Current integration status |
 |---|---:|---|
-| Android host / WebView | Existing host retained via APK overlay | Kotlin host rebuilt; local-origin-only WebView; CI build configured |
-| School lessons | 143 | Not yet imported/validated |
-| School questions | 596 | Not yet imported/validated |
-| Driving theory questions | 1,308 | Engine implemented; source bank audited (unique IDs and valid answer indices); import pending |
-| Banking / HMRC tools | Present in source assets | Not yet imported/validated |
-| Translator | Floating/continuous translator sources included | Not yet ported |
-| Telegram learning reports | Source contains native patches and JS | Not yet ported |
-| Offline profiles / backup | IndexedDB-based profiles documented | Native local multi-profile repository implemented; family backup/export not yet ported |
-| Release signing | Original key unavailable in source bundle | New Elin2026 keystore generated; stored outside Git; CI signing is opt-in via Actions secrets |
-| Hardware validation | Original 9.24 reports hardware test false | Not yet tested on physical devices |
+| Android native baseline | 9.17 full source | Obtained from GitHub Actions artifact and used in the Elin2026 source integration package |
+| Web assets | 9.24 overlay | 686 overlay files merged into the 9.17 asset tree |
+| School lessons | 143 | Imported from 9.24; JSON list count verified as 143 |
+| School questions | 596 | 9.24 school data assets included; full semantic/regression audit still pending |
+| Driving theory questions | 1,308 | Imported; 1,308 unique records and valid answer indices verified |
+| Banking / HMRC | Present in 9.24 assets | Assets included; runtime and privacy review pending |
+| Translator | Floating/continuous translator | 9.24 Java sources, Vosk/JNA dependencies, manifest components and model-fetch script ported in source package; not included in the preview APK |
+| Telegram learning reports | Native patches and JS | 9.24 UnifiedTelegram Java logic ported into source package; device testing pending |
+| Local profiles / secrets | Elin2026 | Local profile repository and AES-GCM Android Keystore vault included |
+| Release signing | New identity | Preview APK signed with the new Elin2026 key; legacy key not reused |
+| Hardware validation | Android / Chromebook | Not yet tested on physical devices |
 
-No item should be marked complete until its implementation and regression tests are present in this branch.
+## Deliverables
 
-## Current implementation\n\n- Persian home dashboard with six module entry points, local search, and module status screens.\n- UI-independent driving theory quiz engine with input validation, one-answer-per-question flow, scoring, and unit tests.\n\n
-- `TheoryQuizSession.kt`: reusable quiz engine validates question records, selects a bounded randomized set, accepts one answer per question, and calculates score/results. A local Kotlin compiler smoke test passed; the repository's Gradle/JUnit and emulator CI have not yet been confirmed green.
-- The 9.24 driving theory JSON was audited locally: 1,308 records, 1,308 unique IDs, and no invalid correct-answer indices. The bank itself has not yet been committed or wired into the app.
+- **Preview APK:** package `com.elin2026.nodin.debug`, versionCode 2, versionName `0.2.0-alpha01-debug`. It is based on the existing 9.17 Android build artifact with the merged 9.24 web assets, manifest identity changed, OS backup disabled, and a new Elin2026 signature. It is not a fresh Gradle compilation. The translator tab shows an availability notice in this preview because its native source port is in the full source package, not in this repackaged APK.
+- **Source integration patch:** contains the 9.24 asset overlay, ported native source additions, Elin2026 build configuration, local security code, tests and a script that applies them to the 9.17 source artifact.
+- **GitHub branch:** this repository branch retains the small scaffold and progress documentation. The full binary asset set is delivered separately because the source integration is too large for a normal Git commit.
 
-## First clean-room implementation
+## Source provenance
 
-- `MainActivity.kt`: new Kotlin Activity and WebViewAssetLoader host. File/content access and cleartext traffic are disabled; only appassets origin is accepted.
-- `SecureTokenVault.kt`: AES-GCM secrets encrypted with a non-exportable Android Keystore key; ciphertext only is persisted.
-- `ProfileRepository.kt`: local child profiles, active-profile switching, rename and delete; malformed profile storage is not silently overwritten.
-- `LocalDataSecurityTest.kt`: Android instrumentation tests for vault encryption and profile isolation.
-- `BuildIdentityTest.kt`: asserts the new application identity is distinct from legacy NODIN.
-- GitHub Actions builds the debug APK, runs JVM tests and emulator instrumentation tests; release signing is enabled only when protected secrets are supplied.
+- 9.17 source artifact: GitHub Actions run [39063593092](https://github.com/Esmaeil897-897/App-Nodin/actions/runs/39063593092), artifact `Nodin-9.17-source` (ID `13024770011`).
+- 9.17 Android artifact: same run, artifact `Nodin-9.17-Android` (ID `13023694087`).
+- 9.24 overlay archive SHA-256: `b87f9bc302919929a94368b7c9f1987f01866099e04f18e04edf0e7b74ea0485`.
 
-The new keystore certificate fingerprint is recorded in `SIGNING.md`. The private keystore is not in this repository.
+## Remaining release gates
+
+- Build the full source project with Android SDK 35 and Java 17.
+- Run JVM and Android instrumentation tests.
+- Download and verify the pinned Vosk English and Persian models.
+- Test banking, Telegram, microphone capture, floating overlay and backup/export flows.
+- Install and test on a physical Android phone and Chromebook.
+
+The historical 9.24 APK cannot be reproduced from its source archive alone: its opaque DEX/SMALI overlay expects an exact 9.23 base APK and the original private signing key. Elin2026 is built as a separate application identity and does not modify NODIN LEGACY.
