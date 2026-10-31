@@ -19,6 +19,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ELIN_SIGNING_ENABLED: ${{ secrets.ELIN_KEYSTORE_BASE64 != '' }}
     defaults:
       run:
         working-directory: elin2026
@@ -42,6 +44,29 @@ jobs:
           arch: x86_64
           profile: Pixel_2
           script: cd elin2026 && gradle connectedDebugAndroidTest
+      - name: Prepare private release key
+        if: env.ELIN_SIGNING_ENABLED == 'true'
+        env:
+          ELIN_KEYSTORE_BASE64: ${{ secrets.ELIN_KEYSTORE_BASE64 }}
+          ELIN_KEYSTORE_PASSWORD: ${{ secrets.ELIN_KEYSTORE_PASSWORD }}
+          ELIN_KEY_ALIAS: ${{ secrets.ELIN_KEY_ALIAS }}
+          ELIN_KEY_PASSWORD: ${{ secrets.ELIN_KEY_PASSWORD }}
+        run: |
+          echo "$ELIN_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/elin2026-release.jks"
+          echo "ELIN_KEYSTORE_PATH=$RUNNER_TEMP/elin2026-release.jks" >> "$GITHUB_ENV"
+          echo "ELIN_KEYSTORE_PASSWORD=$ELIN_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ELIN_KEY_ALIAS=$ELIN_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ELIN_KEY_PASSWORD=$ELIN_KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Build signed release APK
+        if: env.ELIN_SIGNING_ENABLED == 'true'
+        run: gradle assembleRelease
+      - name: Upload signed release APK
+        if: env.ELIN_SIGNING_ENABLED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Elin2026-release-apk
+          path: elin2026/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: Elin2026-debug-apk
