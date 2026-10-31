@@ -4,12 +4,20 @@ on:
   push:
     branches: [Elin2026]
     paths:
-      - "elin2026/**"
+      - "elin2026/app/**"
+      - "elin2026/build.gradle*"
+      - "elin2026/settings.gradle*"
+      - "elin2026/gradle.properties"
+      - "elin2026/gradle/**"
       - ".github/workflows/elin2026-android.yml"
   pull_request:
     branches: [Elin2026]
     paths:
-      - "elin2026/**"
+      - "elin2026/app/**"
+      - "elin2026/build.gradle*"
+      - "elin2026/settings.gradle*"
+      - "elin2026/gradle.properties"
+      - "elin2026/gradle/**"
       - ".github/workflows/elin2026-android.yml"
   workflow_dispatch:
 
