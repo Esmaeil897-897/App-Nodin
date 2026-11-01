@@ -1,0 +1,61 @@
+name: Build Nodin Independent Android APK
+on:
+  push:
+    branches: [nodin-independent-android-build]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Prepare independent app configuration
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('capacitor.config.json')
+          config=json.loads(p.read_text())
+          config['appId']='com.nodin.rewrite.independent'
+          config['appName']='Nodin Independent'
+          p.write_text(json.dumps(config,indent=2)+'\n')
+          PY
+          npm run prepare:web
+      - name: Generate Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Allow legacy radio HTTP streams
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/src/main/AndroidManifest.xml')
+          s=p.read_text()
+          if 'android:usesCleartextTraffic' not in s:
+              s=s.replace('<application', '<application android:usesCleartextTraffic="true"',1)
+          p.write_text(s)
+          PY
+      - name: Build independent debug APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug --no-daemon
+      - name: Verify application ID
+        run: |
+          grep -R 'com.nodin.rewrite.independent' android/app/build.gradle* android/app/src/main/AndroidManifest.xml android/app/src/main/java || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nodin-Independent-legacy-baseline-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
