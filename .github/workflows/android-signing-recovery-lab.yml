@@ -1,0 +1,128 @@
+name: Nodin Android Signing Recovery Lab
+
+on:
+  push:
+    branches:
+      - lab/android-signing-recovery
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test-signing:
+    runs-on: ubuntu-latest
+    env:
+      NODIN_KEYSTORE_A_BASE64: ${{ secrets.NODIN_KEYSTORE_A_BASE64 }}
+      NODIN_KEYSTORE_A_PASSWORD: ${{ secrets.NODIN_KEYSTORE_A_PASSWORD }}
+      NODIN_KEY_ALIAS_A: ${{ secrets.NODIN_KEY_ALIAS_A }}
+      NODIN_KEY_PASSWORD_A: ${{ secrets.NODIN_KEY_PASSWORD_A }}
+      NODIN_KEYSTORE_B_BASE64: ${{ secrets.NODIN_KEYSTORE_B_BASE64 }}
+      NODIN_KEYSTORE_B_PASSWORD: ${{ secrets.NODIN_KEYSTORE_B_PASSWORD }}
+      NODIN_KEY_ALIAS_B: ${{ secrets.NODIN_KEY_ALIAS_B }}
+      NODIN_KEY_PASSWORD_B: ${{ secrets.NODIN_KEY_PASSWORD_B }}
+      NODIN_KEYSTORE_C_BASE64: ${{ secrets.NODIN_KEYSTORE_C_BASE64 }}
+      NODIN_KEYSTORE_C_PASSWORD: ${{ secrets.NODIN_KEYSTORE_C_PASSWORD }}
+      NODIN_KEY_ALIAS_C: ${{ secrets.NODIN_KEY_ALIAS_C }}
+      NODIN_KEY_PASSWORD_C: ${{ secrets.NODIN_KEY_PASSWORD_C }}
+    steps:
+      - name: Checkout isolated lab branch
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare Capacitor Android project
+        run: |
+          npm install --no-audit --no-fund
+          npm run prepare:web
+          npx cap add android
+          npx cap sync android
+      - name: Build debug and unsigned release APKs
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug assembleRelease --no-daemon
+      - name: Verify available signing candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signing-lab
+          SDK_BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          APKSIGNER="$SDK_BUILD_TOOLS/apksigner"
+          ZIPALIGN="$SDK_BUILD_TOOLS/zipalign"
+          UNSIGNED="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          if [ ! -f "$UNSIGNED" ]; then
+            echo "Expected unsigned release APK not found: $UNSIGNED"
+            find android/app/build/outputs/apk -type f -maxdepth 4 || true
+            exit 1
+          fi
+          "$ZIPALIGN" -f -p 4 "$UNSIGNED" signing-lab/aligned-unsigned.apk
+
+          # Control test: a newly generated temporary key proves the signing pipeline works.
+          keytool -genkeypair -v -keystore signing-lab/ci-control-only.jks \
+            -storepass 'ControlOnly-NotForRelease-2026' \
+            -keypass 'ControlOnly-NotForRelease-2026' \
+            -alias nodin-ci-control-only -keyalg RSA -keysize 2048 -validity 30 \
+            -dname "CN=Nodin CI Temporary Test Only"
+          "$APKSIGNER" sign --ks signing-lab/ci-control-only.jks \
+            --ks-key-alias nodin-ci-control-only \
+            --ks-pass pass:ControlOnly-NotForRelease-2026 \
+            --key-pass pass:ControlOnly-NotForRelease-2026 \
+            --out signing-lab/control-test-only.apk signing-lab/aligned-unsigned.apk
+          "$APKSIGNER" verify --verbose --print-certs signing-lab/control-test-only.apk \
+            | tee signing-lab/control-certificate.txt
+
+          # Test only candidate keystores explicitly supplied as GitHub Actions secrets.
+          # Secret values are never printed or uploaded.
+          for candidate in A B C; do
+            b64_var="NODIN_KEYSTORE_${candidate}_BASE64"
+            store_var="NODIN_KEYSTORE_${candidate}_PASSWORD"
+            alias_var="NODIN_KEY_ALIAS_${candidate}"
+            pass_var="NODIN_KEY_PASSWORD_${candidate}"
+            b64="${!b64_var:-}"
+            store_pass="${!store_var:-}"
+            key_alias="${!alias_var:-}"
+            key_pass="${!pass_var:-}"
+            if [ -z "$b64" ]; then
+              echo "Candidate $candidate: not configured; skipped."
+              continue
+            fi
+            if [ -z "$store_pass" ] || [ -z "$key_alias" ] || [ -z "$key_pass" ]; then
+              echo "Candidate $candidate: incomplete secret set; skipped."
+              continue
+            fi
+            ks="signing-lab/candidate-${candidate}.jks"
+            out="signing-lab/candidate-${candidate}-signed.apk"
+            printf '%s' "$b64" | base64 --decode > "$ks"
+            export CANDIDATE_STORE_PASS="$store_pass"
+            export CANDIDATE_KEY_PASS="$key_pass"
+            "$APKSIGNER" sign --ks "$ks" --ks-key-alias "$key_alias" \
+              --ks-pass env:CANDIDATE_STORE_PASS --key-pass env:CANDIDATE_KEY_PASS \
+              --out "$out" signing-lab/aligned-unsigned.apk
+            "$APKSIGNER" verify --verbose --print-certs "$out" \
+              | tee "signing-lab/candidate-${candidate}-certificate.txt"
+            rm -f "$ks" "$out"
+            unset CANDIDATE_STORE_PASS CANDIDATE_KEY_PASS
+            echo "Candidate $candidate: signing and verification succeeded; signed APK discarded."
+          done
+          {
+            echo "Nodin Android signing recovery lab"
+            echo "Control key is temporary and MUST NOT be used for updates/releases."
+            echo "Candidate fingerprints are in candidate-*-certificate.txt when configured."
+          } > signing-lab/README.txt
+      - name: Upload test build and certificate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nodin-signing-recovery-lab
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/release/*unsigned*.apk
+            signing-lab/*.txt
+          if-no-files-found: error
+          retention-days: 7
